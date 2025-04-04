@@ -37,62 +37,43 @@ class Node:
         self.parent = parent  # Parent node for path reconstruction
         self.g = g  # Accumulated cost from the start
 
-def read_map_data_from_input_file(file_path: str) -> tuple[int, int, tuple[int, int], tuple[int, int], list[list[int]]]:
-    """
-    Read and parse the map data from the specified input file.
-
-    This function opens the file, reads the grid dimensions, start and end positions,
-    and constructs a 2D grid where obstacles are marked as -1 and traversable cells
-    contain their height values.
-
-    Args:
-        file_path (str): Path to the map file.
-
-    Returns:
-        tuple: (number_of_rows, number_of_columns, start_position, end_position, grid_map)
-
-    Raises:
-        FileNotFoundError: If the file cannot be found.
-        ValueError: If the file format is invalid (e.g., row length mismatch).
-    """
-    try:
-        with open(file_path, 'r') as file_handle:
-            # Parse the first line for grid dimensions
-            dimension_line = file_handle.readline().strip()
-            number_of_rows, number_of_columns = map(int, dimension_line.split())
-
-            # Parse the start position and adjust to 0-based indexing
-            start_line = file_handle.readline().strip()
-            start_row, start_col = map(int, start_line.split())
-            start_position = (start_row - 1, start_col - 1)
-
-            # Parse the end position and adjust to 0-based indexing
-            end_line = file_handle.readline().strip()
-            end_row, end_col = map(int, end_line.split())
-            end_position = (end_row - 1, end_col - 1)
-
-            # Initialize the grid map
-            grid_map = []
-
-            # Read and parse each row of the grid
-            for _ in range(number_of_rows):
-                row_line = file_handle.readline().strip()
-                if len(row_line) != number_of_columns:
-                    raise ValueError("Row length does not match specified columns")
-                row_data = [
-                    MAP_OBSTACLE_VALUE if char == MAP_OBSTACLE_CHARACTER else int(char)
-                    for char in row_line
-                ]
-                grid_map.append(row_data)
-
-        return number_of_rows, number_of_columns, start_position, end_position, grid_map
-
-    except FileNotFoundError:
-        print(f"Error: Unable to locate the map file at '{file_path}'.")
-        sys.exit(1)
-    except ValueError as validation_error:
-        print(f"Error: Map file format is invalid - {str(validation_error)}.")
-        sys.exit(1)
+def read_map_data_from_input_file(file_handle):
+    # Read dimensions
+    first_line = file_handle.readline().strip().split()
+    number_of_rows, number_of_columns = map(int, first_line)
+    
+    # Read start and end positions (1-based, convert to 0-based)
+    start_line = file_handle.readline().strip().split()
+    start_row, start_col = map(int, start_line)
+    start_row -= 1
+    start_col -= 1
+    
+    end_line = file_handle.readline().strip().split()
+    end_row, end_col = map(int, end_line)
+    end_row -= 1
+    end_col -= 1
+    
+    # Read grid
+    grid_map = []
+    MAP_OBSTACLE_CHARACTER = 'X'
+    MAP_OBSTACLE_VALUE = -1
+    
+    for _ in range(number_of_rows):
+        row_line = file_handle.readline().strip()
+        row_elements = row_line.split()
+        if len(row_elements) != number_of_columns:
+            raise ValueError("Row length does not match specified columns")
+        row_data = []
+        for elem in row_elements:
+            if elem == MAP_OBSTACLE_CHARACTER:
+                row_data.append(MAP_OBSTACLE_VALUE)
+            elif elem.isdigit():
+                row_data.append(int(elem))
+            else:
+                raise ValueError(f"Invalid character in map: {elem}")
+        grid_map.append(row_data)
+    
+    return grid_map, (start_row, start_col), (end_row, end_col)
 
 def is_position_valid_within_grid(
     row_index: int,
