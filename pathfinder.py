@@ -23,57 +23,34 @@ ALL_POSSIBLE_DIRECTIONS = [
 ]
 
 class Node:
-    """Represents a node in the search tree with position, parent, and cost information."""
     def __init__(self, state: tuple[int, int], parent: 'Node', g: int):
-        """
-        Initialize a Node object.
-
-        Args:
-            state (tuple): Position as (row, column).
-            parent (Node): Reference to the parent node.
-            g (int): Cost from the start node to this node.
-        """
         self.state = state  # Current position in the grid
         self.parent = parent  # Parent node for path reconstruction
         self.g = g  # Accumulated cost from the start
 
-def read_map_data_from_input_file(file_handle):
-    # Read dimensions
-    first_line = file_handle.readline().strip().split()
-    number_of_rows, number_of_columns = map(int, first_line)
-    
-    # Read start and end positions (1-based, convert to 0-based)
-    start_line = file_handle.readline().strip().split()
-    start_row, start_col = map(int, start_line)
-    start_row -= 1
-    start_col -= 1
-    
-    end_line = file_handle.readline().strip().split()
-    end_row, end_col = map(int, end_line)
-    end_row -= 1
-    end_col -= 1
-    
-    # Read grid
-    grid_map = []
-    MAP_OBSTACLE_CHARACTER = 'X'
-    MAP_OBSTACLE_VALUE = -1
-    
-    for _ in range(number_of_rows):
-        row_line = file_handle.readline().strip()
-        row_elements = row_line.split()
-        if len(row_elements) != number_of_columns:
-            raise ValueError("Row length does not match specified columns")
-        row_data = []
-        for elem in row_elements:
-            if elem == MAP_OBSTACLE_CHARACTER:
-                row_data.append(MAP_OBSTACLE_VALUE)
-            elif elem.isdigit():
-                row_data.append(int(elem))
-            else:
-                raise ValueError(f"Invalid character in map: {elem}")
-        grid_map.append(row_data)
-    
-    return grid_map, (start_row, start_col), (end_row, end_col)
+def read_map_data_from_input_file(map_file_path):
+    with open(map_file_path, 'r') as file_handle:
+        # Reading the dimensions of the grid
+        first_line = file_handle.readline().strip().split()
+        number_of_rows = int(first_line[0])
+        number_of_columns = int(first_line[1])
+
+        # Reading start position
+        second_line = file_handle.readline().strip().split()
+        start_position = (int(second_line[0]), int(second_line[1]))
+
+        # Reading end position
+        third_line = file_handle.readline().strip().split()
+        end_position = (int(third_line[0]), int(third_line[1]))
+
+        # Reading grid map
+        grid_map = []
+        for _ in range(number_of_rows):
+            line = file_handle.readline().strip().split()
+            grid_map.append(line)
+
+    return number_of_rows, number_of_columns, start_position, end_position, grid_map
+
 
 def is_position_valid_within_grid(
     row_index: int,
@@ -82,21 +59,6 @@ def is_position_valid_within_grid(
     number_of_columns: int,
     grid_map: list[list[int]]
 ) -> bool:
-    """
-    Determine if a given position is valid within the grid map.
-
-    A position is considered valid if it is within the grid boundaries and not marked as an obstacle.
-
-    Args:
-        row_index (int): Row index to check.
-        column_index (int): Column index to check.
-        number_of_rows (int): Total number of rows in the grid.
-        number_of_columns (int): Total number of columns in the grid.
-        grid_map (list): 2D grid map with height values or obstacles.
-
-    Returns:
-        bool: True if the position is valid, False otherwise.
-    """
     is_row_within_bounds = 0 <= row_index < number_of_rows
     is_column_within_bounds = 0 <= column_index < number_of_columns
     if is_row_within_bounds and is_column_within_bounds:
@@ -113,21 +75,6 @@ def calculate_movement_cost(
     to_row: int,
     to_col: int
 ) -> int:
-    """
-    Calculate the cost of moving from one cell to an adjacent cell based on height difference.
-
-    The cost is 1 plus the height difference if moving uphill; otherwise, it is 1.
-
-    Args:
-        grid_map (list): 2D grid map with height values.
-        from_row (int): Starting row position.
-        from_col (int): Starting column position.
-        to_row (int): Destination row position.
-        to_col (int): Destination column position.
-
-    Returns:
-        int: Total movement cost.
-    """
     height_at_start = grid_map[from_row][from_col]
     height_at_end = grid_map[to_row][to_col]
     height_difference = height_at_end - height_at_start
@@ -142,22 +89,6 @@ def heuristic_distance(
     goal_position: tuple[int, int],
     heuristic_type: str
 ) -> float:
-    """
-    Compute the heuristic distance between the current position and the goal position.
-
-    Supports 'euclidean' and 'manhattan' distance heuristics.
-
-    Args:
-        current_position (tuple): Current position as (row, col).
-        goal_position (tuple): Goal position as (row, col).
-        heuristic_type (str): Type of heuristic ('euclidean' or 'manhattan').
-
-    Returns:
-        float: Estimated heuristic cost to the goal.
-
-    Raises:
-        ValueError: If an unknown heuristic type is provided.
-    """
     row_difference = current_position[0] - goal_position[0]
     col_difference = current_position[1] - goal_position[1]
     if heuristic_type == 'euclidean':
@@ -174,20 +105,6 @@ def get_valid_neighbors(
     number_of_columns: int,
     grid_map: list[list[int]]
 ) -> list[tuple[int, int]]:
-    """
-    Retrieve a list of valid neighboring positions adjacent to the current position.
-
-    Checks the four cardinal directions and includes positions that are within bounds and not obstacles.
-
-    Args:
-        current_position (tuple): Current position as (row, col).
-        number_of_rows (int): Total rows in the grid.
-        number_of_columns (int): Total columns in the grid.
-        grid_map (list): 2D grid map.
-
-    Returns:
-        list: List of valid neighbor positions as (row, col) tuples.
-    """
     current_row, current_col = current_position
     valid_neighbors = []
     for delta_row, delta_col in ALL_POSSIBLE_DIRECTIONS:
@@ -198,15 +115,6 @@ def get_valid_neighbors(
     return valid_neighbors
 
 def reconstruct_path_from_goal_node(goal_node: Node) -> list[tuple[int, int]]:
-    """
-    Reconstruct the path from the start to the goal by backtracking from the goal node.
-
-    Args:
-        goal_node (Node): The goal node reached by the search algorithm.
-
-    Returns:
-        list: List of positions from start to goal as (row, col) tuples.
-    """
     path_list = []
     current_node = goal_node
     while current_node is not None:
@@ -226,24 +134,6 @@ def bfs_search_algorithm(
     first_visit_matrix: list[list[int]],
     last_visit_matrix: list[list[int]]
 ) -> Node:
-    """
-    Perform Breadth-First Search to find a path from start to goal.
-
-    Uses a queue to explore nodes level by level, ensuring the shortest path in terms of steps.
-
-    Args:
-        grid_map (list): 2D grid map.
-        start_position (tuple): Starting position as (row, col).
-        goal_position (tuple): Goal position as (row, col).
-        number_of_rows (int): Total rows in the grid.
-        number_of_columns (int): Total columns in the grid.
-        visit_count_matrix (list): Tracks the number of visits to each cell.
-        first_visit_matrix (list): Tracks the step of first visit to each cell.
-        last_visit_matrix (list): Tracks the step of last visit to each cell.
-
-    Returns:
-        Node: Goal node if found, None otherwise.
-    """
     fringe = deque([Node(start_position, None, 0)])
     closed_set = [[False] * number_of_columns for _ in range(number_of_rows)]
     step_counter = 0
@@ -286,24 +176,6 @@ def ucs_search_algorithm(
     first_visit_matrix: list[list[int]],
     last_visit_matrix: list[list[int]]
 ) -> Node:
-    """
-    Perform Uniform Cost Search to find the lowest-cost path from start to goal.
-
-    Uses a priority queue to explore nodes based on accumulated cost (g).
-
-    Args:
-        grid_map (list): 2D grid map.
-        start_position (tuple): Starting position as (row, col).
-        goal_position (tuple): Goal position as (row, col).
-        number_of_rows (int): Total rows in the grid.
-        number_of_columns (int): Total columns in the grid.
-        visit_count_matrix (list): Tracks the number of visits to each cell.
-        first_visit_matrix (list): Tracks the step of first visit to each cell.
-        last_visit_matrix (list): Tracks the step of last visit to each cell.
-
-    Returns:
-        Node: Goal node if found, None otherwise.
-    """
     fringe = [(0, 0, Node(start_position, None, 0))]  # (g_cost, counter, node)
     heapq.heapify(fringe)
     closed_set = [[False] * number_of_columns for _ in range(number_of_rows)]
@@ -350,25 +222,6 @@ def astar_search_algorithm(
     last_visit_matrix: list[list[int]],
     heuristic_type: str
 ) -> Node:
-    """
-    Perform A* Search to find the optimal path from start to goal using a heuristic.
-
-    Uses a priority queue with f = g + h, where g is the cost from start and h is the heuristic.
-
-    Args:
-        grid_map (list): 2D grid map.
-        start_position (tuple): Starting position as (row, col).
-        goal_position (tuple): Goal position as (row, col).
-        number_of_rows (int): Total rows in the grid.
-        number_of_columns (int): Total columns in the grid.
-        visit_count_matrix (list): Tracks the number of visits to each cell.
-        first_visit_matrix (list): Tracks the step of first visit to each cell.
-        last_visit_matrix (list): Tracks the step of last visit to each cell.
-        heuristic_type (str): 'euclidean' or 'manhattan' heuristic.
-
-    Returns:
-        Node: Goal node if found, None otherwise.
-    """
     start_node = Node(start_position, None, 0)
     initial_f_cost = heuristic_distance(start_position, goal_position, heuristic_type)
     fringe = [(initial_f_cost, 0, start_node)]  # (f_cost, counter, node)
@@ -409,14 +262,6 @@ def astar_search_algorithm(
     return None
 
 def print_matrix_with_space_separation(matrix: list[list[str]], num_rows: int, num_cols: int) -> None:
-    """
-    Print a 2D matrix with elements separated by spaces.
-
-    Args:
-        matrix (list): 2D matrix to print.
-        num_rows (int): Number of rows to print.
-        num_cols (int): Number of columns to print.
-    """
     for row_idx in range(num_rows):
         row_elements = [str(matrix[row_idx][col_idx]) for col_idx in range(num_cols)]
         print(' '.join(row_elements))
@@ -425,15 +270,6 @@ def print_grid_with_path(
     grid_map: list[list[int]],
     path: list[tuple[int, int]] = None
 ) -> None:
-    """
-    Print the grid map with the path marked by '*'.
-
-    This function is not used in the main execution but can be useful for visualization.
-
-    Args:
-        grid_map (list): 2D grid map with height values or obstacles.
-        path (list, optional): List of positions in the path to mark.
-    """
     path_set = set(path) if path else set()
     for row_idx, row in enumerate(grid_map):
         for col_idx, cell in enumerate(row):
