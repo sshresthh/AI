@@ -290,7 +290,7 @@ def print_grid_with_path(
         print()
 
 def main():
-    """Handle command-line arguments and execute the appropriate search algorithm."""
+    """Handling the command-line arguments and execute the appropriate search algorithm."""
     if len(sys.argv) < 4:
         print("Usage: python pathfinder.py [mode] [map] [algorithm] [heuristic]")
         print("  mode: 'debug' or 'release'")
