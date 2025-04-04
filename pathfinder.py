@@ -6,7 +6,7 @@ import heapq
 STUDENT_ID = 'a1878646'
 DEGREE = 'UG'
 
-# Constants for map parsing and grid representation
+# All the Constants for map parsing and grid representation
 MAP_OBSTACLE_CHARACTER = 'X'
 MAP_OBSTACLE_VALUE = -1
 
