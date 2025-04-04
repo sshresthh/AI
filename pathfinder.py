@@ -35,19 +35,29 @@ def read_map_data_from_input_file(map_file_path):
         number_of_rows = int(first_line[0])
         number_of_columns = int(first_line[1])
 
-        # Reading start position
+        # Reading start position and converting to 0-based indices
         second_line = file_handle.readline().strip().split()
-        start_position = (int(second_line[0]), int(second_line[1]))
+        start_row = int(second_line[0]) - 1
+        start_col = int(second_line[1]) - 1
+        start_position = (start_row, start_col)
 
-        # Reading end position
+        # Reading end position and converting to 0-based indices
         third_line = file_handle.readline().strip().split()
-        end_position = (int(third_line[0]), int(third_line[1]))
+        end_row = int(third_line[0]) - 1
+        end_col = int(third_line[1]) - 1
+        end_position = (end_row, end_col)
 
-        # Reading grid map
+        # Reading grid map and processing each cell
         grid_map = []
         for _ in range(number_of_rows):
             line = file_handle.readline().strip().split()
-            grid_map.append(line)
+            processed_line = []
+            for cell in line:
+                if cell == 'X':
+                    processed_line.append(MAP_OBSTACLE_VALUE)
+                else:
+                    processed_line.append(int(cell))
+            grid_map.append(processed_line)
 
     return number_of_rows, number_of_columns, start_position, end_position, grid_map
 
@@ -61,12 +71,10 @@ def is_position_valid_within_grid(
 ) -> bool:
     is_row_within_bounds = 0 <= row_index < number_of_rows
     is_column_within_bounds = 0 <= column_index < number_of_columns
-    if is_row_within_bounds and is_column_within_bounds:
-        is_not_obstacle = grid_map[row_index][column_index] != MAP_OBSTACLE_VALUE
-    else:
-        is_not_obstacle = False
-    position_is_valid = is_row_within_bounds and is_column_within_bounds and is_not_obstacle
-    return position_is_valid
+    if not (is_row_within_bounds and is_column_within_bounds):
+        return False
+    is_not_obstacle = grid_map[row_index][column_index] != MAP_OBSTACLE_VALUE
+    return is_not_obstacle
 
 def calculate_movement_cost(
     grid_map: list[list[int]],
@@ -383,7 +391,7 @@ def main():
         last_matrix = [
             [
                 'X' if grid_map[row][col] == MAP_OBSTACLE_VALUE else '.' if last_visit_matrix[row][col] is None else str(last_visit_matrix[row][col])
-                for col in range(number_of_rows)
+                for col in range(number_of_columns)
             ]
             for row in range(number_of_rows)
         ]
