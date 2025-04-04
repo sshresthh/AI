@@ -3,7 +3,6 @@ import math
 from collections import deque
 import heapq
 
-# Student-specific constants for identification
 STUDENT_ID = 'a1878646'
 DEGREE = 'UG'
 
@@ -11,7 +10,7 @@ DEGREE = 'UG'
 MAP_OBSTACLE_CHARACTER = 'X'
 MAP_OBSTACLE_VALUE = -1
 
-# Define movement directions as constants for clarity and configurability
+# Defining movement directions as constants for clarity and configurability
 DIRECTION_UPWARD = (-1, 0)
 DIRECTION_DOWNWARD = (1, 0)
 DIRECTION_LEFTWARD = (0, -1)
