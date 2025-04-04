@@ -397,7 +397,7 @@ def main():
         ]
         print_matrix_with_space_separation(last_matrix, number_of_rows, number_of_columns)
     elif mode == 'release':
-        print("path:")  # Display only the path or 'null'
+        # In release mode, just print the path matrix without the "path:" prefix
         print_matrix_with_space_separation(
             path_matrix,
             number_of_rows if solution_node else 1,
